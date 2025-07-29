@@ -1,0 +1,11 @@
+1)Import numpy as np and matplotlib.pyplot as plt.
+
+2)Define maths and science as NumPy arrays containing students' marks.
+
+3)Use plt.scatter() to plot maths on the x-axis and science on the y-axis. Set the color to 'blue' and marker style to 'o'.
+
+4)Add title and labels
+    a)Use plt.title() to add a title to the plot.
+    b)Use plt.xlabel() and plt.ylabel() to label the x and y axes.
+
+5)Display the plot using plt.show() 
