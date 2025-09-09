@@ -5,7 +5,7 @@ from sklearn.neighbors import KNeighborsClassifier
 df = pd.read_csv('tshirt.csv')
 X = df.iloc[:, :-1]
 y = df.iloc[:, -1]
-row1=df.iloc[1:]
+row1=df.iloc[0:]
 print(row1)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
 knn = KNeighborsClassifier(n_neighbors=3)
