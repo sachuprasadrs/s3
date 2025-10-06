@@ -12,9 +12,7 @@ diabetes_X = diabetes_X[:, np.newaxis, 2]
 print(f"Shape of the feature matrix (Step 11): {diabetes_X.shape}")
 print(f"First 5 feature values (Step 12): \n{diabetes_X[:5]}")
 
-diabetes_X_train, diabetes_X_test, diabetes_y_train, diabetes_y_test = train_test_split(
-    diabetes_X, diabetes_y, test_size=0.2, random_state=42
-)
+diabetes_X_train, diabetes_X_test, diabetes_y_train, diabetes_y_test = train_test_split(diabetes_X, diabetes_y, test_size=0.2, random_state=42)
 regr = linear_model.LinearRegression()
 regr.fit(diabetes_X_train, diabetes_y_train)
 diabetes_y_pred = regr.predict(diabetes_X_test)
@@ -50,4 +48,3 @@ plt.ylabel('Target (Disease Progression)')
 plt.legend()
 plt.grid(True)
 plt.show()
-
