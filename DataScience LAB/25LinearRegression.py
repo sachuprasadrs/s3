@@ -2,33 +2,39 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_diabetes
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
-
-X, y = load_diabetes(return_X_y=True)
-X = X[:, [2]] 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-model = LinearRegression().fit(X_train, y_train)
-y_pred = model.predict(X_test)
-
-try:
-    bmi_input = float(input("Enter a BMI value (e.g., 0.05): "))
-    if not -0.2 < bmi_input < 0.2:
-        print("Warning: BMI input is outside typical scaled range (-0.2 to 0.2).")
-except ValueError:
-    print("Invalid input. Using default value 0.05.")
-    bmi_input = 0.05
-user_pred = model.predict([[bmi_input]])
-print(f"\nPredicted target for BMI {bmi_input:.2f}: {user_pred[0]:.2f}")
-print(f"Model Coefficient: {model.coef_[0]:.2f}")
-print(f"Mean Squared Error: {mean_squared_error(y_test, y_pred):.2f}")
-print(f"R² Score: {r2_score(y_test, y_pred):.2f}")
-plt.scatter(X_test, y_test, color='black', label='Test Data')
-plt.plot(X_test, y_pred, color='blue', label='Model')
-plt.scatter([[bmi_input]], user_pred, color='red', s=100, marker='x', label='User BMI Prediction')
-plt.title('BMI vs Disease Progression')
-plt.xlabel('BMI (scaled)')
-plt.ylabel('Disease Progression')
+# Load the dataset
+diabetes = load_diabetes()
+print("Feature names in the diabetes dataset:\n", diabetes.feature_names)
+# Use only one feature (BMI)
+diabetes_X, diabetes_y = load_diabetes(return_X_y=True)
+diabetes_X = diabetes_X[:, np.newaxis, 2]  # Selecting the BMI feature (column index 2)
+print("Shape of feature matrix:", diabetes_X.shape)
+# Split the data into training/testing sets
+diabetes_X_train = diabetes_X[:-20]
+diabetes_X_test = diabetes_X[-20:]
+diabetes_y_train = diabetes_y[:-20]
+diabetes_y_test = diabetes_y[-20:]
+# Create linear regression model
+model = LinearRegression()
+model.fit(diabetes_X_train, diabetes_y_train)
+# Make predictions using the testing set
+diabetes_y_pred = model.predict(diabetes_X_test)
+# Predict for user-provided BMI value
+bmi_value = float(input("Enter a BMI value for prediction: "))
+bmi_array = np.array([[bmi_value]])
+predicted_target = model.predict(bmi_array)
+# Output results
+print("Predicted target variable for entered BMI:", predicted_target[0])
+print("\nModel coefficient:", model.coef_)
+print("Model Intercept:", model.intercept_)
+print("\nMean squared error: %.2f" % mean_squared_error(diabetes_y_test, diabetes_y_pred))
+print("Coefficient of determination (R²): %.2f" % r2_score(diabetes_y_test, diabetes_y_pred))
+# Optional: plot the data
+plt.scatter(diabetes_X_test, diabetes_y_test, color='black', label='Actual')
+plt.plot(diabetes_X_test, diabetes_y_pred, color='blue', linewidth=2, label='Predicted')
+plt.xlabel("BMI")
+plt.ylabel("Disease Progression")
+plt.title("Linear Regression on Diabetes Dataset (BMI Feature)")
 plt.legend()
-plt.grid(True)
 plt.show()
