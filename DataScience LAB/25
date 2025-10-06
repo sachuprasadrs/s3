@@ -1,0 +1,146 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_diabetes
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+    These lines load tools you need:
+
+        numpy helps with math and arrays (lists of numbers).
+
+        matplotlib.pyplot helps make graphs.
+
+        load_diabetes loads the diabetes dataset (a set of data about patients).
+
+        LinearRegression is the tool that helps find a line to predict things.
+
+        mean_squared_error and r2_score are ways to check how good your predictions are.
+
+diabetes = load_diabetes()
+
+    Loads the diabetes data into a variable called diabetes.
+
+print("Feature names in the diabetes dataset:\n", diabetes.feature_names)
+
+    Shows what the different measurements (features) are in the data. For example, one of them is BMI (body mass index).
+
+diabetes_X, diabetes_y = load_diabetes(return_X_y=True)
+
+    Loads the data again but splits it into:
+
+        diabetes_X: the measurements (features), like BMI, age, etc.
+
+        diabetes_y: the results we want to predict (disease progression).
+
+diabetes_X = diabetes_X[:, np.newaxis, 2]  # Selecting the BMI feature (column index 2)
+
+    Picks only one feature, BMI (the third one, index 2).
+
+    np.newaxis just makes sure the shape of the data fits what the model expects (2D array).
+
+    After this, diabetes_X only has BMI values for all patients.
+
+print("Shape of feature matrix:", diabetes_X.shape)
+
+    Prints the size of the data. For example, (442, 1) means 442 patients, 1 feature each (BMI).
+
+diabetes_X_train = diabetes_X[:-20]
+diabetes_X_test = diabetes_X[-20:]
+diabetes_y_train = diabetes_y[:-20]
+diabetes_y_test = diabetes_y[-20:]
+
+    Splits the data into two parts:
+
+        Training set: all but the last 20 samples (used to teach the model).
+
+        Test set: the last 20 samples (used to check how good the model is).
+
+    The [:-20] means "everything except the last 20".
+
+    The [-20:] means "only the last 20".
+
+model = LinearRegression()
+
+    Creates a new linear regression model. Think of it as a blank line finder.
+
+model.fit(diabetes_X_train, diabetes_y_train)
+
+    Trains (teaches) the model using the training data:
+
+        It looks at BMI values (diabetes_X_train) and disease progression (diabetes_y_train).
+
+        Finds the best line that fits the training data.
+
+diabetes_y_pred = model.predict(diabetes_X_test)
+
+    Uses the trained model to predict disease progression for the test BMI values.
+
+    Stores these predictions in diabetes_y_pred.
+
+bmi_value = float(input("Enter a BMI value for prediction: "))
+
+    Asks the user to type in a BMI number.
+
+    Converts the typed input to a decimal number (float).
+
+bmi_array = np.array([[bmi_value]])
+
+    Converts the single BMI number into a shape the model expects:
+
+        A 2D array with one sample and one feature.
+
+predicted_target = model.predict(bmi_array)
+
+    Uses the model to predict disease progression for the BMI number the user gave.
+
+print("Predicted target variable for entered BMI:", predicted_target[0])
+
+    Prints the predicted disease progression for the user's BMI.
+
+print("\nModel coefficient:", model.coef_)
+print("Model Intercept:", model.intercept_)
+
+    Shows:
+
+        model.coef_: The slope of the line — how much the disease progression changes per unit of BMI.
+
+        model.intercept_: The starting point of the line when BMI is zero.
+
+print("\nMean squared error: %.2f" % mean_squared_error(diabetes_y_test, diabetes_y_pred))
+
+    Shows how far off the predictions are, on average.
+
+    Smaller number means predictions are closer to real values.
+
+print("Coefficient of determination (R²): %.2f" % r2_score(diabetes_y_test, diabetes_y_pred))
+
+    Shows how well the model fits the data.
+
+    Number between 0 and 1 — closer to 1 is better.
+
+plt.scatter(diabetes_X_test, diabetes_y_test, color='black', label='Actual')
+
+    Plots the real test data points (black dots):
+
+        BMI on the x-axis.
+
+        Disease progression on the y-axis.
+
+plt.plot(diabetes_X_test, diabetes_y_pred, color='blue', linewidth=2, label='Predicted')
+
+    Plots the line predicted by the model (blue line).
+
+plt.xlabel("BMI")
+plt.ylabel("Disease Progression")
+plt.title("Linear Regression on Diabetes Dataset (BMI Feature)")
+plt.legend()
+plt.show()
+
+    Adds labels to the axes and title to the plot.
+
+    Adds a legend explaining the dots and line.
+
+    Shows the graph window.
+
+Summary:
+You load data about diabetes, focus on BMI, train a model to predict disease progression, test how good it is, ask the user for a BMI number, predict for that number, and finally plot all results so you can see how well the model fits.
