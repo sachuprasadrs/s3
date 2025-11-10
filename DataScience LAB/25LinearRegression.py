@@ -4,35 +4,35 @@ from sklearn.datasets import load_diabetes
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 # Load the dataset
-diabetes = load_diabetes()
-print("Feature names in the diabetes dataset:\n", diabetes.feature_names)
+data = load_diabetes()
+print("Feature names in the diabetes dataset:\n", data.feature_names)
 # Use only one feature (BMI)
-diabetes_X, diabetes_y = load_diabetes(return_X_y=True)
-diabetes_X = diabetes_X[:, np.newaxis, 2]  # Selecting the BMI feature (column index 2)
-print("Shape of feature matrix:", diabetes_X.shape)
-# Split the data into training/testing sets
-diabetes_X_train = diabetes_X[:-20]
-diabetes_X_test = diabetes_X[-20:]
-diabetes_y_train = diabetes_y[:-20]
-diabetes_y_test = diabetes_y[-20:]
-# Create linear regression model
-model = LinearRegression()
-model.fit(diabetes_X_train, diabetes_y_train)
-# Make predictions using the testing set
-diabetes_y_pred = model.predict(diabetes_X_test)
+x, y = load_diabetes(return_X_y=True)
+x = x[:, np.newaxis, 2]  # Selecting BMI feature (column index 2)
+print("Shape of feature matrix:", x.shape)
+# Split into training/testing sets
+x_train = x[:-20]
+x_test = x[-20:]
+y_train = y[:-20]
+y_test = y[-20:]
+# Create Linear Regression model
+c_lr = LinearRegression()
+c_lr.fit(x_train, y_train)
+# Predict on test set
+y_pred = c_lr.predict(x_test)
 # Predict for user-provided BMI value
-bmi_value = float(input("Enter a BMI value for prediction: "))
-bmi_array = np.array([[bmi_value]])
-predicted_target = model.predict(bmi_array)
+bmi = float(input("Enter a BMI value for prediction: "))
+sample = np.array([[bmi]])
+pred = c_lr.predict(sample)
 # Output results
-print("Predicted target variable for entered BMI:", predicted_target[0])
-print("\nModel coefficient:", model.coef_)
-print("Model Intercept:", model.intercept_)
-print("\nMean squared error: %.2f" % mean_squared_error(diabetes_y_test, diabetes_y_pred))
-print("Coefficient of determination (R²): %.2f" % r2_score(diabetes_y_test, diabetes_y_pred))
-# Optional: plot the data
-plt.scatter(diabetes_X_test, diabetes_y_test, color='black', label='Actual')
-plt.plot(diabetes_X_test, diabetes_y_pred, color='blue', linewidth=2, label='Predicted')
+print("Predicted target variable for entered BMI:", pred[0])
+print("\nModel Coefficient:", c_lr.coef_)
+print("Model Intercept:", c_lr.intercept_)
+print("\nMean Squared Error: %.2f" % mean_squared_error(y_test, y_pred))
+print("Coefficient of Determination (R²): %.2f" % r2_score(y_test, y_pred))
+# Plot
+plt.scatter(x_test, y_test, color='black', label='Actual')
+plt.plot(x_test, y_pred, color='blue', linewidth=2, label='Predicted')
 plt.xlabel("BMI")
 plt.ylabel("Disease Progression")
 plt.title("Linear Regression on Diabetes Dataset (BMI Feature)")
