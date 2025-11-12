@@ -1,4 +1,4 @@
-Program 3: Simple Calculator App (Android Java)
+Program 2: Simple Calculator App (Android Java)
 Aim
 To design an Android app that allows the user to enter two numbers and perform basic arithmetic operations (add, subtract, multiply, divide), displaying the result.
 
