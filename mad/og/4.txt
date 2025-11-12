@@ -1,0 +1,249 @@
+Program 4: Counter App (with Fragment Lifecycle Focus)
+Let's study a simple Counter app using Fragments, refresh the algorithm, code, and include all relevant viva points—especially about fragments and their lifecycle (since this topic is a frequent viva/progress question and is in your algorithms/pdf references).
+
+Refurbished Algorithm: Counter with Fragments
+Start the app (MainActivity):
+
+Load a Fragment (CounterFragment) in the activity layout.
+
+In CounterFragment:
+
+Initialize an integer counter variable (count = 0).
+
+Add three buttons: Increment, Decrement, Reset.
+
+Add a TextView to display the current count.
+
+On button press:
+
+If Increment → add 1 to count and update display.
+
+If Decrement → subtract 1 (prevent going negative if you want) and update display.
+
+If Reset → set count to 0 and update display.
+
+Each relevant Fragment lifecycle event should log/display which lifecycle callback was called to help you learn the flow, e.g. via Logcat or a side TextView.
+
+Test UI by pressing buttons and by rotating/minimizing app:
+
+Counter should maintain or reset value according to your logic.
+
+Watch fragment lifecycle events during these changes.
+
+End.
+
+Files to Alter:
+MainActivity.java (to load fragment)
+
+CounterFragment.java (all counter & fragment lifecycle handling)
+
+fragment_counter.xml (fragment UI layout)
+
+activity_main.xml (hosts the fragment container)
+
+Sample (Refactored) Code
+1. activity_main.xml
+xml
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragmentContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+2. fragment_counter.xml
+xml
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tvCounter"
+        android:text="0"
+        android:textSize="48sp"
+        android:layout_marginBottom="24dp" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/btnDecrement"
+            android:text="-" />
+        <Button
+            android:id="@+id/btnReset"
+            android:text="Reset"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp" />
+        <Button
+            android:id="@+id/btnIncrement"
+            android:text="+" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvLifecycle"
+        android:text="Fragment lifecycle events:\n"
+        android:textSize="12sp"
+        android:paddingTop="30dp" />
+</LinearLayout>
+3. MainActivity.java
+java
+package com.example.counterfragment;
+
+import android.os.Bundle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+
+public class MainActivity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragmentContainer, new CounterFragment())
+                .commit();
+        }
+    }
+}
+4. CounterFragment.java (core logic + lifecycle logs)
+java
+package com.example.counterfragment;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import android.util.Log;
+
+public class CounterFragment extends Fragment {
+    private int count = 0;
+    private TextView tvCounter, tvLifecycle;
+    private final String TAG = "FragmentLC";
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_counter, container, false);
+        tvCounter = v.findViewById(R.id.tvCounter);
+        tvLifecycle = v.findViewById(R.id.tvLifecycle);
+        Button btnInc = v.findViewById(R.id.btnIncrement);
+        Button btnDec = v.findViewById(R.id.btnDecrement);
+        Button btnReset = v.findViewById(R.id.btnReset);
+
+        btnInc.setOnClickListener(view -> updateCounter(count + 1));
+        btnDec.setOnClickListener(view -> updateCounter(Math.max(0, count - 1)));
+        btnReset.setOnClickListener(view -> updateCounter(0));
+
+        updateCounter(count);
+        logEvent("onCreateView()");
+        return v;
+    }
+
+    private void updateCounter(int newCnt) {
+        count = newCnt;
+        tvCounter.setText(String.valueOf(count));
+    }
+
+    private void logEvent(String msg) {
+        Log.d(TAG, msg);
+        if (tvLifecycle != null)
+            tvLifecycle.append("\n" + msg);
+    }
+
+    @Override
+    public void onAttach(@NonNull android.content.Context context) {
+        super.onAttach(context); logEvent("onAttach()");
+    }
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState); logEvent("onCreate()");
+    }
+    @Override
+    public void onStart() {
+        super.onStart(); logEvent("onStart()");
+    }
+    @Override
+    public void onResume() {
+        super.onResume(); logEvent("onResume()");
+    }
+    @Override
+    public void onPause() {
+        super.onPause(); logEvent("onPause()");
+    }
+    @Override
+    public void onStop() {
+        super.onStop(); logEvent("onStop()");
+    }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView(); logEvent("onDestroyView()");
+    }
+    @Override
+    public void onDestroy() {
+        super.onDestroy(); logEvent("onDestroy()");
+    }
+    @Override
+    public void onDetach() {
+        super.onDetach(); logEvent("onDetach()");
+    }
+}
+Fragments & Lifecycle: Viva Essentials
+1. What is a Fragment?
+A Fragment is a modular section of an Activity, with its own layout and lifecycle. You can combine multiple fragments in a single activity to build multi-pane UIs—especially useful for tablets and responsive layouts.
+
+2. How does a Fragment's lifecycle differ from an Activity?
+Fragments have their own lifecycle methods which are similar to activities (onCreate, onStart, onResume, etc.), but they also include fragment-specific methods: onAttach(), onCreateView(), onDestroyView(), and onDetach(). Some methods are closely tied to when the fragment's view is created and destroyed, separate from the fragment object itself.​
+
+3. Order of Fragment Lifecycle methods (from attach to detach):
+onAttach() — Fragment is associated with its parent activity.
+
+onCreate() — Fragment instance created.
+
+onCreateView() — Inflate view hierarchy for fragment UI.
+
+onViewCreated() — (Optional, for view setup)
+
+onStart() — Fragment becomes visible.
+
+onResume() — Fragment ready for user interaction.
+
+onPause() — User leaving; commit UI/data changes.
+
+onStop() — No longer visible.
+
+onDestroyView() — Clean up view/resources.
+
+onDestroy() — Final cleanup of fragment instance.
+
+onDetach() — Disassociate from parent.​
+
+4. What is the relationship between Activity and Fragment lifecycles?
+If an activity is stopped or destroyed, all its fragments go through their own matching lifecycle methods (activity's onStop triggers fragments' onStop, etc.).​
+
+5. When should you use onCreateView() vs. onCreate()?
+Use onCreate() to initialize data and resources not related to the UI.
+
+Use onCreateView() to inflate and return the fragment's layout (UI setup).​
+
+6. What happens to fragments on configuration changes (e.g., rotation)?
+Fragments are destroyed and recreated along with their parent activity by default. You should save necessary state in the fragment so you can restore it if needed.
+
+7. Can you add or remove fragments at runtime?
+Yes, using fragment transactions: getSupportFragmentManager().beginTransaction().add()/replace()/remove()...commit().
+
+8. Differences between onDestroyView() and onDestroy()?
+onDestroyView() is called when the fragment's UI view is destroyed but fragment object may remain.
+
+onDestroy() is called just before the fragment instance is removed from memory.
+
+9. Advantages of using fragments
+Modular code, reusable UI, supports multiple-pane layouts, better back stack control, responsive UI for different devices.
+
+10. How to communicate between fragment and activity?
+Use interfaces or ViewModel (for shared data), or FragmentManager events.
