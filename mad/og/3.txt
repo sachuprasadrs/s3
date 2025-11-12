@@ -1,0 +1,183 @@
+Program 3: Activity Lifecycle (Android)
+Let's master the Android Activity Lifecycle, revisiting the algorithm, implementation, and all major viva/FAQs that come up with this app type.
+
+Refreshed Algorithm
+Algorithm: Demonstrate Activity Lifecycle
+
+Start app (Activity launches).
+
+Override each lifecycle method in your Activity:
+
+onCreate()
+
+onStart()
+
+onResume()
+
+onPause()
+
+onStop()
+
+onRestart()
+
+onDestroy()
+
+Display/log a message for each method (on the screen and/or Logcat), indicating which callback is running.
+
+User interacts:
+
+Minimize, reopen, rotate device, start another app, etc., to observe order of lifecycle events.
+
+Each transition triggers the relevant methods and displays to the user what just happened.
+
+End (app closes, onDestroy() shown/logged).
+
+Files to edit:
+
+MainActivity.java (override lifecycle methods, add logs and display)
+
+activity_main.xml (optional: TextView/ScrollView for messages)
+
+Key Code & Files
+File: MainActivity.java
+
+java
+package com.example.activitylifecycle;
+
+import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle;
+import android.widget.TextView;
+import android.util.Log;
+
+public class MainActivity extends AppCompatActivity {
+    private TextView tvLifecycle;
+    private StringBuilder logBuilder = new StringBuilder();
+    private static final String TAG = "LC_Callbacks";
+
+    private void logAndShow(String msg) {
+        String update = msg + "\n";
+        Log.d(TAG, msg);
+        logBuilder.append(update);
+        if (tvLifecycle != null) tvLifecycle.setText(logBuilder.toString());
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        tvLifecycle = findViewById(R.id.tvLifecycle);
+        logAndShow("onCreate() called");
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        logAndShow("onStart() called");
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        logAndShow("onResume() called");
+    }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        logAndShow("onPause() called");
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        logAndShow("onStop() called");
+    }
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        logAndShow("onRestart() called");
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        logAndShow("onDestroy() called");
+    }
+}
+File: activity_main.xml
+
+xml
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tvLifecycle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Lifecycle callbacks will show here..."
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:background="#f0f0f0"/>
+</LinearLayout>
+Essential Viva/Exam Questions & Answers
+1. What is the activity lifecycle in Android?
+
+It is the complete set of states and transitions that an Activity passes through in its life, from creation to destruction. The Android system calls particular lifecycle methods at each stage().​
+
+2. Name the main activity lifecycle callbacks and the order they usually occur in.
+
+onCreate(), onStart(), onResume() (running and visible). When backgrounded: onPause(), onStop(). If returning: onRestart(), onStart(), onResume(). Finally: onPause(), onStop(), onDestroy() upon closing or system reclaim().​
+
+3. When does Android call each lifecycle method?
+
+onCreate() when activity is first launched.
+
+onStart() after onCreate (visible, but not always interactive).
+
+onResume() after onStart (interactive).
+
+onPause() when partially visible (e.g., a dialog or switching apps).
+
+onStop() when fully hidden.
+
+onRestart() when coming back from stopped.
+
+onDestroy() when being finished or killed().​
+
+4. Give a real-life sequence:
+
+Launch app: onCreate() → onStart() → onResume()
+
+Open new activity: A: onPause(), B: onCreate(), onStart(), onResume(), A: onStop()
+
+Press back in B: B: onPause(), A: onRestart(), onStart(), onResume(), B: onStop(), onDestroy()().​
+
+5. Why should you override onPause and onStop?
+
+To save data/state, pause animations, stop sensors/camera, or release heavy resources, since your app may be killed after these states.
+
+6. What happens if you rotate the device?
+
+By default, the activity is destroyed and recreated: onPause() → onStop() → onDestroy() → then onCreate() → onStart() → onResume().
+
+7. When do you save data with onSaveInstanceState?
+
+When you want to preserve trivial UI data across temporary destruction (like screen rotation), use onSaveInstanceState(Bundle) and restore in onCreate or onRestoreInstanceState().​
+
+Key Concepts for Your Viva
+Activity is a single, focused thing a user can do—each screen is an activity().​
+
+Lifecycle management is needed due to limited resources & unpredictable system events.
+
+Always handle onPause and onStop for cleanup to avoid memory leaks, crashes, or user annoyance().​
+
+You can test lifecycle by switching apps, locking/unlocking, rotating, and navigating Multiple Activities.
+
+The system can kill stopped activities when under memory pressure ().​
+
+Practice ideas:
+Draw the lifecycle diagram from memory (try block arrows showing path between callbacks).
+
+Open Logcat and see your own callback logs in action.
+
+Add data-saves in onPause/onSaveInstanceState (bonus for advanced).
+
