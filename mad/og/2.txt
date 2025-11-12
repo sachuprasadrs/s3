@@ -1,0 +1,223 @@
+Program 2: Calculator App (Android)
+We'll go step by step:
+
+Restate and fix algorithm
+
+Explain involved code/files
+
+Review all key viva questions/concepts for calculator logic and UI
+
+Step 1: Refurbished Algorithm
+Algorithm: Simple Calculator
+
+Start app, showing two input fields (for numbers) and four buttons (+, –, ×, ÷), plus a result display area.
+
+Wait for user input:
+
+User enters Number 1 and Number 2 as numbers (integers or decimals).
+
+User taps an operation button (+, –, ×, ÷).
+
+On button click:
+
+Read values from both input fields.
+
+If either field is empty, show an error and do not continue.
+
+Parse their values as numbers (handle errors gracefully, e.g., show error if divided by zero or if not a valid number).
+
+Perform the corresponding operation:
+
++: Add the numbers
+
+–: Subtract second from first
+
+×: Multiply the numbers
+
+÷: Divide first by second (if second is not zero)
+
+Display result in the result area
+
+Wait for next operation (user can change numbers or operation)
+
+End
+
+Files You'll Edit
+activity_main.xml (layout/UI)
+
+MainActivity.java (logic for buttons, validation, result output)
+
+Step 2: Modernized Code Structure
+File 1: activity_main.xml
+
+xml
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:text="Simple Calculator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <EditText
+        android:id="@+id/etNum1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="Enter first number" />
+
+    <EditText
+        android:id="@+id/etNum2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="Enter second number"
+        android:layout_marginBottom="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnAdd"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="+" />
+        <Button
+            android:id="@+id/btnSub"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="-" />
+        <Button
+            android:id="@+id/btnMul"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="×" />
+        <Button
+            android:id="@+id/btnDiv"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="÷" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvResult"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Result will be shown here"
+        android:textSize="20sp"
+        android:textAlignment="center"
+        android:padding="24dp" />
+</LinearLayout>
+File 2: MainActivity.java
+
+java
+package com.example.calculator;
+
+import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle;
+import android.widget.*;
+import android.view.View;
+
+public class MainActivity extends AppCompatActivity {
+    EditText etNum1, etNum2;
+    TextView tvResult;
+    Button btnAdd, btnSub, btnMul, btnDiv;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        etNum1 = findViewById(R.id.etNum1);
+        etNum2 = findViewById(R.id.etNum2);
+        tvResult = findViewById(R.id.tvResult);
+        btnAdd = findViewById(R.id.btnAdd);
+        btnSub = findViewById(R.id.btnSub);
+        btnMul = findViewById(R.id.btnMul);
+        btnDiv = findViewById(R.id.btnDiv);
+
+        View.OnClickListener listener = v -> {
+            String n1 = etNum1.getText().toString().trim();
+            String n2 = etNum2.getText().toString().trim();
+            if (n1.isEmpty() || n2.isEmpty()) {
+                tvResult.setText("Please enter both numbers.");
+                return;
+            }
+            double num1, num2;
+            try {
+                num1 = Double.parseDouble(n1);
+                num2 = Double.parseDouble(n2);
+            } catch (NumberFormatException e) {
+                tvResult.setText("Invalid number format.");
+                return;
+            }
+            double result = 0;
+            String op = "";
+            switch (v.getId()) {
+                case R.id.btnAdd: result = num1 + num2; op = "+"; break;
+                case R.id.btnSub: result = num1 - num2; op = "-"; break;
+                case R.id.btnMul: result = num1 * num2; op = "×"; break;
+                case R.id.btnDiv:
+                    if (num2 == 0) {
+                        tvResult.setText("Cannot divide by zero.");
+                        return;
+                    }
+                    result = num1 / num2;
+                    op = "/";
+                    break;
+            }
+            tvResult.setText("Result: " + num1 + " " + op + " " + num2 + " = " + result);
+        };
+
+        btnAdd.setOnClickListener(listener);
+        btnSub.setOnClickListener(listener);
+        btnMul.setOnClickListener(listener);
+        btnDiv.setOnClickListener(listener);
+    }
+}
+(You only need to alter these two files for a basic calculator. Bonus: add more input/error checking as needed!)
+
+Step 3: Key Viva Points & Android Concepts
+1. Explain the UI elements needed for a calculator.
+Two EditTexts for numbers.
+
+Four Buttons for operations.
+
+A TextView (or EditText, disabled) to show the result.
+
+2. How can you limit EditText input to only allow numbers?
+Use android:inputType="numberDecimal" in XML. This brings up a numeric keyboard and prevents non-numeric input.
+
+3. Why use double instead of int for calculations?
+To support decimal values (not just integer calculations).
+
+4. How do you handle divide by zero?
+Check if denominator is zero before dividing, and display an error message if so. Never allow crash on division by zero.
+
+5. How do you retrieve and use input values?
+Use getText().toString() to read, trim spaces, and parse using, e.g., Double.parseDouble(). Always check for empty fields before parsing.
+
+6. How can you show errors to the user?
+Set TextView message or use Toast.makeText() to display error feedback directly.
+
+7. How would you improve the calculator?
+Allow negative numbers, support clear button, optionally support percentages, parentheses, or chain calculations for a scientific calculator.
+
+8. How do you connect all button clicks to one listener?
+Use a single View.OnClickListener instance and switch on v.getId() for all buttons.
+
+9. Which activities and files are altered in this project?
+Only one Activity (MainActivity.java) and its layout (activity_main.xml), unless splitting into separate calculators or handling navigation to history/saved results.
