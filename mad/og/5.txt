@@ -1,0 +1,196 @@
+Program 5: Shared Preferences for Persistent Storage
+Let's learn by breaking it down step-by-step, then cover all essential SharedPreferences viva questions and implementation details!
+
+Refurbished Algorithm: Save & Retrieve with SharedPreferences
+Start app (MainActivity loads).
+
+Initialize UI elements:
+
+EditText for name, EditText for email.
+
+Button to Save.
+
+Button to Retrieve.
+
+Button to Clear.
+
+On Save click:
+
+Get text from both EditTexts
+
+Use getSharedPreferences() to open file (usually as MODE_PRIVATE)
+
+Use Editor to put strings using putString(key, value)
+
+Commit/apply the changes
+
+On Retrieve click:
+
+Use getSharedPreferences()
+
+Use getString(key, default) to fetch each value
+
+Set text in both EditTexts or show with Toast/TextView
+
+On Clear click:
+
+Use Editor to clear all with .clear().commit()
+
+Or set fields and stored values to empty
+
+End (data persists—close and reopen app to see values retained)
+
+Files You Edit
+activity_main.xml – for UI
+
+MainActivity.java – for logic
+
+Key Code Walkthrough (Minimal, Modern, All-in-One-Activity Option)
+File: activity_main.xml
+xml
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Name" />
+
+    <EditText
+        android:id="@+id/etEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Email"
+        android:inputType="textEmailAddress" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+        <Button
+            android:id="@+id/btnSave"
+            android:text="Save"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btnGet"
+            android:text="Retrieve"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btnClear"
+            android:text="Clear"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+</LinearLayout>
+File: MainActivity.java
+java
+package com.example.sharedprefs;
+
+import androidx.appcompat.app.AppCompatActivity;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.widget.*;
+
+public class MainActivity extends AppCompatActivity {
+    EditText etName, etEmail;
+    Button btnSave, btnGet, btnClear;
+    SharedPreferences prefs;
+    String PREFS_NAME = "MyPref";
+    String KEY_NAME = "nameKey", KEY_EMAIL = "emailKey";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        etName = findViewById(R.id.etName);
+        etEmail = findViewById(R.id.etEmail);
+        btnSave = findViewById(R.id.btnSave);
+        btnGet = findViewById(R.id.btnGet);
+        btnClear = findViewById(R.id.btnClear);
+        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+
+        btnSave.setOnClickListener(v -> {
+            String name = etName.getText().toString();
+            String email = etEmail.getText().toString();
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(KEY_NAME, name);
+            editor.putString(KEY_EMAIL, email);
+            editor.apply(); // or editor.commit()
+            Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show();
+        });
+        btnGet.setOnClickListener(v -> {
+            String name = prefs.getString(KEY_NAME, "");
+            String email = prefs.getString(KEY_EMAIL, "");
+            etName.setText(name);
+            etEmail.setText(email);
+        });
+        btnClear.setOnClickListener(v -> {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.clear();
+            editor.apply();
+            etName.setText("");
+            etEmail.setText("");
+            Toast.makeText(this, "Cleared!", Toast.LENGTH_SHORT).show();
+        });
+    }
+}
+Essential Viva/Exam Questions & Concepts: Shared Preferences
+1. What are SharedPreferences in Android?
+
+SharedPreferences are storage APIs for saving simple key-value pairs (primitive data) that persist across app launches.​
+
+2. Can you store objects in SharedPreferences?
+
+No. Only primitives (String, int, boolean, float, long) or sets of Strings are allowed. For objects, use JSON or another storage method.​
+
+3. How do you access SharedPreferences?
+
+Use getSharedPreferences() in an Activity or getPreferences() (for one file per activity). Always open with MODE_PRIVATE for security.​
+
+4. How do you save data in SharedPreferences?
+
+Get an Editor with prefs.edit(). Use putString(), etc. Call apply() (async, recommended) or commit() (sync), to save changes.​
+
+5. How do you retrieve data?
+
+Use methods like prefs.getString(key, default), getInt(), etc. Always specify a default value for safety.
+
+6. Where is SharedPreferences data stored?
+
+In an app's private internal storage, as an XML file. This cannot be accessed by other apps due to Android sandboxing.​
+
+7. Can you observe changes to a preference?
+
+Yes, by registering a SharedPreferences.OnSharedPreferenceChangeListener.​
+
+8. What happens when you call clear()?
+
+Removes all key-value pairs in that SharedPreferences file for the app.
+
+9. Difference between apply() and commit()?
+
+apply() saves asynchronously (no return value, faster)
+
+commit() saves synchronously (returns boolean, blocks UI until done)​
+
+10. What happens to data if user uninstalls the app?
+
+SharedPreferences (and all internal storage data) are deleted by the system.
+
+11. When should you use SharedPreferences?
+
+When you only need to save a small amount of simple data (settings, login flags, last-used IDs, user preferences, onboarding state, etc.).​
+
+12. How to keep sensitive data secure?
+
+Don't store secrets (passwords, tokens) unless they're encrypted; SharedPreferences is only as secure as your app's sandbox. For increased security use EncryptedSharedPreferences.
