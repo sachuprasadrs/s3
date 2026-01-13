@@ -1,0 +1,801 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { 
+  CheckCircle2, 
+  Circle, 
+  BookOpen, 
+  Code2, 
+  Target, 
+  Briefcase,
+  Terminal,
+  Cpu,
+  MessageSquare,
+  Calendar,
+  Zap,
+  ExternalLink,
+  Save,
+  Clock,
+  Trophy,
+  Filter,
+  ChevronRight,
+  ChevronLeft,
+  Search,
+  ArrowUpRight
+} from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
+
+// --- Firebase Config ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'career-mastery-v2';
+
+// --- Categories Config ---
+const CATEGORIES = {
+  DSA: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: Code2, label: 'DSA Problem' },
+  APTITUDE: { color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: Clock, label: 'Aptitude' },
+  PORTFOLIO: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: Briefcase, label: 'Portfolio' },
+  CS_CORE: { color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: Cpu, label: 'CS Core' },
+  INTERVIEW: { color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', icon: MessageSquare, label: 'HR/Interview' },
+  PYTHON: { color: 'text-yellow-300', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', icon: Terminal, label: 'Language' },
+};
+
+// --- Detailed Roadmap Generation ---
+const generateRoadmap = () => {
+  const roadmap = [];
+
+  // Helper to add a day
+  const addDay = (day, phase, tasks) => {
+    roadmap.push({ day, phase, tasks: tasks.map((t, i) => ({ ...t, id: `d${day}_t${i}` })) });
+  };
+
+  // --- PHASE 1: FOUNDATIONS (Days 1-15) ---
+  
+  // Day 1
+  addDay(1, "Phase 1: Foundations", [
+    { text: "Python: Review List/Dict/Set Time Complexity (Big O)", category: "PYTHON" },
+    { text: "DSA: Solve 'Reverse String' (Two Pointers)", category: "DSA", link: "https://leetcode.com/problems/reverse-string/" },
+    { text: "DSA: Solve 'First Unique Character in a String'", category: "DSA", link: "https://leetcode.com/problems/first-unique-character-in-a-string/" },
+    { text: "Resume: Create V1 Draft (Contact Info, Education, Skills)", category: "PORTFOLIO" }
+  ]);
+
+  // Day 2
+  addDay(2, "Phase 1: Foundations", [
+    { text: "Python: Master 'collections' module (Counter, defaultdict)", category: "PYTHON" },
+    { text: "DSA: Implement Stack using List", category: "DSA" },
+    { text: "DSA: Implement Queue using Deque", category: "DSA" },
+    { text: "GitHub: Create repo for an old project & push code", category: "PORTFOLIO" }
+  ]);
+
+  // Day 3
+  addDay(3, "Phase 1: Foundations", [
+    { text: "Python: List & Dict Comprehensions Drill", category: "PYTHON" },
+    { text: "DSA: Solve 'Valid Palindrome'", category: "DSA", link: "https://leetcode.com/problems/valid-palindrome/" },
+    { text: "Quant: Percentages - Solve 7 practice problems", category: "APTITUDE" }
+  ]);
+
+  // Day 4
+  addDay(4, "Phase 1: Foundations", [
+    { text: "Python: Recursion Basics (Factorial, Fibonacci)", category: "PYTHON" },
+    { text: "DSA: Solve 'Fibonacci Number' (Iterative vs Recursive)", category: "DSA", link: "https://leetcode.com/problems/fibonacci-number/" },
+    { text: "DSA: Solve 'Power of Two'", category: "DSA", link: "https://leetcode.com/problems/power-of-two/" }
+  ]);
+
+  // Day 5
+  addDay(5, "Phase 1: Foundations", [
+    { text: "DSA: Review Space Complexity (Auxiliary vs Total)", category: "DSA" },
+    { text: "Logical: Blood Relations - Understand family tree symbols", category: "APTITUDE" },
+    { text: "Logical: Solve 5 Blood Relation puzzles", category: "APTITUDE" }
+  ]);
+
+  // Day 6
+  addDay(6, "Phase 1: Foundations", [
+    { text: "DSA: Arrays - Prefix Sum Pattern", category: "DSA" },
+    { text: "DSA: Solve 'Two Sum' (Map Approach)", category: "DSA", link: "https://leetcode.com/problems/two-sum/" },
+    { text: "DSA: Solve 'Running Sum of 1d Array'", category: "DSA", link: "https://leetcode.com/problems/running-sum-of-1d-array/" },
+    { text: "Resume: Refine Project Descriptions using STAR method", category: "PORTFOLIO" }
+  ]);
+
+  // Day 7
+  addDay(7, "Phase 1: Foundations", [
+    { text: "DSA: Arrays - Sliding Window Basics", category: "DSA" },
+    { text: "DSA: Solve 'Maximum Subarray' (Kadane's Algo)", category: "DSA", link: "https://leetcode.com/problems/maximum-subarray/" },
+    { text: "GitHub: Write a professional README.md for your main repo", category: "PORTFOLIO" }
+  ]);
+
+  // Day 8
+  addDay(8, "Phase 1: Foundations", [
+    { text: "DSA: Arrays - Two Pointer Basics", category: "DSA" },
+    { text: "DSA: Solve 'Move Zeroes'", category: "DSA", link: "https://leetcode.com/problems/move-zeroes/" },
+    { text: "DSA: Solve 'Best Time to Buy and Sell Stock'", category: "DSA", link: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/" },
+    { text: "Quant: Profit & Loss - Learn formulas", category: "APTITUDE" }
+  ]);
+
+  // Day 9
+  addDay(9, "Phase 1: Foundations", [
+    { text: "DSA: Arrays - Hashing for existence", category: "DSA" },
+    { text: "DSA: Solve 'Contains Duplicate'", category: "DSA", link: "https://leetcode.com/problems/contains-duplicate/" },
+    { text: "DSA: Solve 'Majority Element'", category: "DSA", link: "https://leetcode.com/problems/majority-element/" },
+    { text: "Logical: Direction Sense Test - Draw diagrams", category: "APTITUDE" }
+  ]);
+
+  // Day 10
+  addDay(10, "Phase 1: Foundations", [
+    { text: "DSA: Review Array patterns summary", category: "DSA" },
+    { text: "DSA: Solve 'Squares of a Sorted Array'", category: "DSA", link: "https://leetcode.com/problems/squares-of-a-sorted-array/" },
+    { text: "CS Core: DBMS - Learn Normalization (1NF, 2NF, 3NF)", category: "CS_CORE" }
+  ]);
+
+  // Day 11
+  addDay(11, "Phase 1: Foundations", [
+    { text: "DSA: Strings - Frequency Maps", category: "DSA" },
+    { text: "DSA: Solve 'Valid Anagram'", category: "DSA", link: "https://leetcode.com/problems/valid-anagram/" },
+    { text: "DSA: Solve 'Ransom Note'", category: "DSA", link: "https://leetcode.com/problems/ransom-note/" }
+  ]);
+
+  // Day 12
+  addDay(12, "Phase 1: Foundations", [
+    { text: "DSA: Strings - String Manipulation", category: "DSA" },
+    { text: "DSA: Solve 'Longest Common Prefix'", category: "DSA", link: "https://leetcode.com/problems/longest-common-prefix/" },
+    { text: "Verbal: Practice 2 Reading Comprehension passages", category: "APTITUDE" }
+  ]);
+
+  // Day 13
+  addDay(13, "Phase 1: Foundations", [
+    { text: "DSA: Strings - Grouping Strategy", category: "DSA" },
+    { text: "DSA: Solve 'Group Anagrams'", category: "DSA", link: "https://leetcode.com/problems/group-anagrams/" },
+    { text: "Quant: Time & Work - 'Unit Work' method", category: "APTITUDE" }
+  ]);
+
+  // Day 14
+  addDay(14, "Phase 1: Foundations", [
+    { text: "DSA: Strings - Mapping", category: "DSA" },
+    { text: "DSA: Solve 'Isomorphic Strings'", category: "DSA", link: "https://leetcode.com/problems/isomorphic-strings/" },
+    { text: "DSA: Solve 'Word Pattern'", category: "DSA", link: "https://leetcode.com/problems/word-pattern/" }
+  ]);
+
+  // Day 15
+  addDay(15, "Phase 1: Foundations", [
+    { text: "DSA: Phase 1 Revision", category: "DSA" },
+    { text: "DSA: Re-solve 'Two Sum' without looking", category: "DSA" },
+    { text: "DSA: Re-solve 'Valid Anagram' without looking", category: "DSA" },
+    { text: "Logical: Syllogisms - Venn Diagrams practice", category: "APTITUDE" }
+  ]);
+
+  // --- PHASE 2: CORE DSA (Days 16-45) ---
+
+  // Day 16
+  addDay(16, "Phase 2: Core DSA", [
+    { text: "DSA: Sliding Window - Variable Length", category: "DSA" },
+    { text: "DSA: Solve 'Longest Substring Without Repeating Characters'", category: "DSA", link: "https://leetcode.com/problems/longest-substring-without-repeating-characters/" },
+    { text: "DSA: Solve 'Max Consecutive Ones III'", category: "DSA", link: "https://leetcode.com/problems/max-consecutive-ones-iii/" }
+  ]);
+
+  // Day 17
+  addDay(17, "Phase 2: Core DSA", [
+    { text: "DSA: Sliding Window - Fixed Length", category: "DSA" },
+    { text: "DSA: Solve 'Find All Anagrams in a String'", category: "DSA", link: "https://leetcode.com/problems/find-all-anagrams-in-a-string/" },
+    { text: "CS Core: OS - Process vs Threads / Context Switching", category: "CS_CORE" }
+  ]);
+
+  // Day 18
+  addDay(18, "Phase 2: Core DSA", [
+    { text: "DSA: Two Pointers - Container Pattern", category: "DSA" },
+    { text: "DSA: Solve 'Container With Most Water'", category: "DSA", link: "https://leetcode.com/problems/container-with-most-water/" },
+    { text: "Quant: Speed, Distance & Time - Relative Speed", category: "APTITUDE" }
+  ]);
+
+  // Day 19
+  addDay(19, "Phase 2: Core DSA", [
+    { text: "DSA: Two Pointers - Sum Patterns", category: "DSA" },
+    { text: "DSA: Solve '3Sum' (Handle duplicates)", category: "DSA", link: "https://leetcode.com/problems/3sum/" },
+    { text: "DSA: Solve 'Sort Colors' (Dutch National Flag)", category: "DSA", link: "https://leetcode.com/problems/sort-colors/" }
+  ]);
+
+  // Day 20
+  addDay(20, "Phase 2: Core DSA", [
+    { text: "DSA: Prefix Sum - Subarray Patterns", category: "DSA" },
+    { text: "DSA: Solve 'Subarray Sum Equals K'", category: "DSA", link: "https://leetcode.com/problems/subarray-sum-equals-k/" },
+    { text: "CS Core: Networks - OSI Model Layers deeply", category: "CS_CORE" }
+  ]);
+
+  // Day 21
+  addDay(21, "Phase 2: Core DSA", [
+    { text: "DSA: Revision of Window/Pointers", category: "DSA" },
+    { text: "DSA: Re-solve 'Container With Most Water'", category: "DSA" },
+    { text: "Verbal: Practice 10 Synonym/Antonym questions", category: "APTITUDE" }
+  ]);
+
+  // Day 22 (Adding generic days for 22-25 to save space, but keeping pattern)
+  for (let i = 22; i <= 25; i++) {
+    addDay(i, "Phase 2: Core DSA", [
+      { text: "DSA: Practice Medium Array Problems", category: "DSA", link: "https://leetcode.com/problemset/all/?topicSlugs=array&difficulty=MEDIUM" },
+      { text: "DSA: Solve 2 new problems from LeetCode Top Interview 150", category: "DSA" },
+      { text: i === 23 ? "Quant: Review Weak Areas" : "Logical: Seating Arrangements", category: "APTITUDE" }
+    ]);
+  }
+
+  // Day 26 - Recursion Start
+  addDay(26, "Phase 2: Core DSA", [
+    { text: "DSA: Recursion - Tree Visualization", category: "DSA" },
+    { text: "DSA: Solve 'Subsets' (Backtracking)", category: "DSA", link: "https://leetcode.com/problems/subsets/" },
+    { text: "HR: Draft 'Tell me about yourself' (60s pitch)", category: "INTERVIEW" }
+  ]);
+
+  // Day 27
+  addDay(27, "Phase 2: Core DSA", [
+    { text: "DSA: Backtracking - Permutations", category: "DSA" },
+    { text: "DSA: Solve 'Permutations'", category: "DSA", link: "https://leetcode.com/problems/permutations/" },
+    { text: "DSA: Solve 'Combination Sum'", category: "DSA", link: "https://leetcode.com/problems/combination-sum/" }
+  ]);
+
+  // Day 28
+  addDay(28, "Phase 2: Core DSA", [
+    { text: "DSA: Backtracking - Grid/Board", category: "DSA" },
+    { text: "DSA: Solve 'Word Search'", category: "DSA", link: "https://leetcode.com/problems/word-search/" },
+    { text: "Portfolio: Review Resume V1 with a peer/mentor", category: "PORTFOLIO" }
+  ]);
+
+  // Day 29
+  addDay(29, "Phase 2: Core DSA", [
+    { text: "DSA: Backtracking - Harder Constraints", category: "DSA" },
+    { text: "DSA: Solve 'N-Queens' (Just understand logic)", category: "DSA", link: "https://leetcode.com/problems/n-queens/" },
+    { text: "DSA: Solve 'Letter Combinations of a Phone Number'", category: "DSA", link: "https://leetcode.com/problems/letter-combinations-of-a-phone-number/" }
+  ]);
+
+  // Day 30
+  addDay(30, "Phase 2: Core DSA", [
+    { text: "DSA: Revision - Recursion", category: "DSA" },
+    { text: "DSA: Re-solve 'Subsets' from scratch", category: "DSA" },
+    { text: "HR: Write answers for 'Greatest Strengths & Weaknesses'", category: "INTERVIEW" }
+  ]);
+
+  // Day 31 - Linked Lists
+  addDay(31, "Phase 2: Core DSA", [
+    { text: "DSA: Linked List - Reversal", category: "DSA" },
+    { text: "DSA: Solve 'Reverse Linked List'", category: "DSA", link: "https://leetcode.com/problems/reverse-linked-list/" },
+    { text: "DSA: Solve 'Middle of the Linked List'", category: "DSA", link: "https://leetcode.com/problems/middle-of-the-linked-list/" }
+  ]);
+
+  // Day 32
+  addDay(32, "Phase 2: Core DSA", [
+    { text: "DSA: Linked List - Cycle Detection", category: "DSA" },
+    { text: "DSA: Solve 'Linked List Cycle'", category: "DSA", link: "https://leetcode.com/problems/linked-list-cycle/" },
+    { text: "CS Core: DBMS - SQL Joins (Inner, Left, Right)", category: "CS_CORE" }
+  ]);
+
+  // Day 33
+  addDay(33, "Phase 2: Core DSA", [
+    { text: "DSA: Linked List - Merging", category: "DSA" },
+    { text: "DSA: Solve 'Merge Two Sorted Lists'", category: "DSA", link: "https://leetcode.com/problems/merge-two-sorted-lists/" },
+    { text: "Quant: Permutations & Combinations Basics", category: "APTITUDE" }
+  ]);
+
+  // Day 34
+  addDay(34, "Phase 2: Core DSA", [
+    { text: "DSA: Linked List - Removal", category: "DSA" },
+    { text: "DSA: Solve 'Remove Nth Node From End of List'", category: "DSA", link: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/" },
+    { text: "DSA: Solve 'Delete Node in a Linked List'", category: "DSA", link: "https://leetcode.com/problems/delete-node-in-a-linked-list/" }
+  ]);
+
+  // Day 35
+  addDay(35, "Phase 2: Core DSA", [
+    { text: "DSA: Linked List - Intersection", category: "DSA" },
+    { text: "DSA: Solve 'Intersection of Two Linked Lists'", category: "DSA", link: "https://leetcode.com/problems/intersection-of-two-linked-lists/" },
+    { text: "HR: Prepare answer for 'Why do you want to work here?'", category: "INTERVIEW" }
+  ]);
+
+  // Day 36 - Stacks
+  addDay(36, "Phase 2: Core DSA", [
+    { text: "DSA: Stacks - Valid Parentheses Pattern", category: "DSA" },
+    { text: "DSA: Solve 'Valid Parentheses'", category: "DSA", link: "https://leetcode.com/problems/valid-parentheses/" },
+    { text: "DSA: Solve 'Min Stack'", category: "DSA", link: "https://leetcode.com/problems/min-stack/" }
+  ]);
+
+  // Day 37
+  addDay(37, "Phase 2: Core DSA", [
+    { text: "DSA: Stacks - Monotonic Stack", category: "DSA" },
+    { text: "DSA: Solve 'Next Greater Element I'", category: "DSA", link: "https://leetcode.com/problems/next-greater-element-i/" },
+    { text: "GD Prep: Read 1 tech editorial (e.g., TechCrunch/Verge)", category: "INTERVIEW" }
+  ]);
+
+  // Day 38
+  addDay(38, "Phase 2: Core DSA", [
+    { text: "DSA: Stacks - Temperature Pattern", category: "DSA" },
+    { text: "DSA: Solve 'Daily Temperatures'", category: "DSA", link: "https://leetcode.com/problems/daily-temperatures/" },
+    { text: "DSA: Solve 'Evaluate Reverse Polish Notation'", category: "DSA", link: "https://leetcode.com/problems/evaluate-reverse-polish-notation/" }
+  ]);
+
+  // Day 39
+  addDay(39, "Phase 2: Core DSA", [
+    { text: "DSA: Queues - Basics", category: "DSA" },
+    { text: "DSA: Solve 'Implement Queue using Stacks'", category: "DSA", link: "https://leetcode.com/problems/implement-queue-using-stacks/" },
+    { text: "CS Core: OS - Memory Management / Paging Basics", category: "CS_CORE" }
+  ]);
+
+  // Day 40
+  addDay(40, "Phase 2: Core DSA", [
+    { text: "DSA: Review Stacks/Queues", category: "DSA" },
+    { text: "DSA: Re-solve 'Valid Parentheses' & 'Daily Temperatures'", category: "DSA" },
+    { text: "Logical: Solve 3 Logic Puzzles", category: "APTITUDE" }
+  ]);
+
+  // Day 41 - Trees
+  addDay(41, "Phase 2: Core DSA", [
+    { text: "DSA: Trees - Traversals (In/Pre/Post)", category: "DSA" },
+    { text: "DSA: Solve 'Binary Tree Inorder Traversal'", category: "DSA", link: "https://leetcode.com/problems/binary-tree-inorder-traversal/" },
+    { text: "GD Prep: Pick a topic (AI Ethics) and list pros/cons", category: "INTERVIEW" }
+  ]);
+
+  // Day 42
+  addDay(42, "Phase 2: Core DSA", [
+    { text: "DSA: Trees - Depth/Height", category: "DSA" },
+    { text: "DSA: Solve 'Maximum Depth of Binary Tree'", category: "DSA", link: "https://leetcode.com/problems/maximum-depth-of-binary-tree/" },
+    { text: "DSA: Solve 'Diameter of Binary Tree'", category: "DSA", link: "https://leetcode.com/problems/diameter-of-binary-tree/" }
+  ]);
+
+  // Day 43
+  addDay(43, "Phase 2: Core DSA", [
+    { text: "DSA: Trees - Inversion/Symmetry", category: "DSA" },
+    { text: "DSA: Solve 'Invert Binary Tree'", category: "DSA", link: "https://leetcode.com/problems/invert-binary-tree/" },
+    { text: "DSA: Solve 'Symmetric Tree'", category: "DSA", link: "https://leetcode.com/problems/symmetric-tree/" },
+    { text: "Mock Test: Take 30min Aptitude Test (Online)", category: "APTITUDE" }
+  ]);
+
+  // Day 44
+  addDay(44, "Phase 2: Core DSA", [
+    { text: "DSA: Trees - Level Order (BFS)", category: "DSA" },
+    { text: "DSA: Solve 'Binary Tree Level Order Traversal'", category: "DSA", link: "https://leetcode.com/problems/binary-tree-level-order-traversal/" },
+    { text: "Python: Review OOP concepts (Classes, Inheritance)", category: "PYTHON" }
+  ]);
+
+  // Day 45
+  addDay(45, "Phase 2: Core DSA", [
+    { text: "DSA: Trees - Subtrees", category: "DSA" },
+    { text: "DSA: Solve 'Subtree of Another Tree'", category: "DSA", link: "https://leetcode.com/problems/subtree-of-another-tree/" },
+    { text: "DSA: Solve 'Same Tree'", category: "DSA", link: "https://leetcode.com/problems/same-tree/" }
+  ]);
+
+  // --- PHASE 3 & 4 (Simplified Generation for Days 46-90) ---
+  for (let i = 46; i <= 90; i++) {
+    const tasks = [];
+    let phase = i <= 75 ? "Phase 3: Advanced DSA" : "Phase 4: DP Mastery";
+
+    if (i <= 55) { // Binary Search
+      tasks.push({ text: "DSA: Binary Search Pattern", category: "DSA" });
+      tasks.push({ text: "DSA: Solve 'Binary Search' or 'Search Insert Position'", category: "DSA", link: "https://leetcode.com/tag/binary-search/" });
+    } else if (i <= 65) { // Heaps
+      tasks.push({ text: "DSA: Heaps/Priority Queue", category: "DSA" });
+      tasks.push({ text: "DSA: Solve 'Kth Largest Element' or 'Top K Frequent'", category: "DSA", link: "https://leetcode.com/tag/heap/" });
+    } else if (i <= 75) { // Graphs
+      tasks.push({ text: "DSA: Graphs (BFS/DFS/Islands)", category: "DSA" });
+      tasks.push({ text: "DSA: Solve 'Number of Islands' or 'Clone Graph'", category: "DSA", link: "https://leetcode.com/tag/graph/" });
+    } else if (i <= 80) { // DP 1D
+      tasks.push({ text: "DSA: DP 1D (Climbing Stairs/Robber)", category: "DSA" });
+      tasks.push({ text: "DSA: Solve 'Climbing Stairs'", category: "DSA", link: "https://leetcode.com/problems/climbing-stairs/" });
+    } else { // DP 2D
+      tasks.push({ text: "DSA: DP 2D (Grid/Paths)", category: "DSA" });
+      tasks.push({ text: "DSA: Solve 'Unique Paths'", category: "DSA", link: "https://leetcode.com/problems/unique-paths/" });
+    }
+
+    // Specific Interventions from Plan
+    if (i === 46) tasks.push({ text: "Interview: Record yourself explaining a project", category: "INTERVIEW" });
+    if (i === 50) tasks.push({ text: "Portfolio: Final Polish of Resume & GitHub", category: "PORTFOLIO" });
+    if (i === 55) tasks.push({ text: "Company Research: Identify 5 Target Companies", category: "INTERVIEW" });
+    if (i === 47) tasks.push({ text: "Mock Test: Review mistakes from previous test", category: "APTITUDE" });
+    if (i === 52) tasks.push({ text: "HR: Review prepared answers", category: "INTERVIEW" });
+
+    addDay(i, phase, tasks);
+  }
+
+  return roadmap;
+};
+
+const ROADMAP = generateRoadmap();
+
+// --- Components ---
+
+const DonutChart = ({ completed, total }) => {
+  const percentage = total > 0 ? (completed / total) * 100 : 0;
+  const strokeDasharray = 2 * Math.PI * 40; 
+  const strokeDashoffset = strokeDasharray * ((100 - percentage) / 100);
+
+  return (
+    <div className="relative w-32 h-32 flex items-center justify-center">
+      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#1e293b" strokeWidth="8" />
+        <circle 
+          cx="50" cy="50" r="40" 
+          fill="transparent" 
+          stroke={percentage === 100 ? "#10b981" : "#3b82f6"} 
+          strokeWidth="8" 
+          strokeDasharray={strokeDasharray} 
+          strokeDashoffset={strokeDashoffset} 
+          strokeLinecap="round"
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center">
+        <span className="text-2xl font-bold text-slate-200">{Math.round(percentage)}%</span>
+        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Done</span>
+      </div>
+    </div>
+  );
+};
+
+const TaskCard = ({ task, isCompleted, onToggle }) => {
+  const catStyle = CATEGORIES[task.category] || CATEGORIES.DSA;
+  const Icon = catStyle.icon;
+
+  return (
+    <div 
+      className={`
+        relative p-4 rounded-xl border transition-all duration-300 group
+        ${isCompleted 
+          ? 'bg-slate-900/40 border-slate-800 opacity-60' 
+          : 'bg-slate-800/40 border-slate-700 hover:border-slate-600 hover:bg-slate-800/60'}
+      `}
+    >
+      <div className="flex items-start gap-4">
+        <button
+          onClick={() => onToggle(task.id)}
+          className={`
+            mt-1 flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all
+            ${isCompleted 
+              ? 'bg-emerald-500 border-emerald-500 text-white' 
+              : 'border-slate-600 text-transparent hover:border-slate-400'}
+          `}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+        </button>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.color} border ${catStyle.border}`}>
+              {catStyle.label}
+            </span>
+            {task.link && (
+              <a 
+                href={task.link} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-slate-500 hover:text-blue-400 flex items-center gap-1 text-[10px] font-medium transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Open Resource <ArrowUpRight className="w-3 h-3" />
+              </a>
+            )}
+          </div>
+          <p className={`text-sm font-medium leading-snug ${isCompleted ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+            {task.text}
+          </p>
+        </div>
+        
+        <Icon className={`w-5 h-5 opacity-20 group-hover:opacity-40 transition-opacity ${catStyle.color} shrink-0`} />
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [completedTasks, setCompletedTasks] = useState({});
+  const [notes, setNotes] = useState({});
+  const [activeDay, setActiveDay] = useState(1);
+  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('');
+
+  // --- Auth & Sync ---
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) { console.error(err); }
+    };
+    initAuth();
+    return onAuthStateChanged(auth, u => {
+      setUser(u);
+      if(!u) setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'mastery_v2');
+    const unsub = onSnapshot(ref, snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        setCompletedTasks(d.completedTasks || {});
+        setNotes(d.notes || {});
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [user]);
+
+  const saveData = useCallback(async (newTasks, newNotes) => {
+    if (!user) return;
+    setSaveStatus('Saving...');
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'mastery_v2'), {
+        completedTasks: newTasks || completedTasks,
+        notes: newNotes || notes,
+        lastUpdated: new Date().toISOString()
+      }, { merge: true });
+      setSaveStatus('Saved');
+      setTimeout(() => setSaveStatus(''), 1500);
+    } catch (e) { setSaveStatus('Error'); }
+  }, [user, completedTasks, notes]);
+
+  // --- Handlers ---
+  const toggleTask = (taskId) => {
+    const next = { ...completedTasks, [taskId]: !completedTasks[taskId] };
+    setCompletedTasks(next);
+    saveData(next, notes);
+  };
+
+  const updateNote = (day, text) => {
+    const next = { ...notes, [day]: text };
+    setNotes(next);
+  };
+
+  const handleNoteBlur = () => saveData(completedTasks, notes);
+
+  // --- Computed Stats ---
+  const currentDayData = ROADMAP.find(d => d.day === activeDay);
+  
+  const stats = useMemo(() => {
+    let total = 0;
+    let done = 0;
+    ROADMAP.forEach(day => {
+      day.tasks.forEach(t => {
+        total++;
+        if (completedTasks[t.id]) done++;
+      });
+    });
+    return { total, done };
+  }, [completedTasks]);
+
+  const filteredTasks = useMemo(() => {
+    if (!currentDayData) return [];
+    if (activeFilter === 'ALL') return currentDayData.tasks;
+    return currentDayData.tasks.filter(t => t.category === activeFilter);
+  }, [currentDayData, activeFilter]);
+
+  if (loading) return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"/>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-blue-500/30">
+      
+      {/* Top Navigation Bar */}
+      <nav className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
+              <Terminal size={18} />
+            </div>
+            <span className="font-bold text-lg hidden sm:block tracking-tight text-slate-100">
+              Career<span className="text-blue-400">Mastery</span>
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex flex-col items-end mr-2">
+              <span className="text-xs text-slate-400 font-medium">Overall Progress</span>
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-500"
+                    style={{ width: `${(stats.done / stats.total) * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold text-slate-200">{Math.round((stats.done / stats.total) * 100)}%</span>
+              </div>
+            </div>
+            {saveStatus && (
+              <span className="flex items-center gap-1 text-xs font-medium text-emerald-400 animate-pulse">
+                <Save className="w-3 h-3" /> {saveStatus}
+              </span>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8">
+        
+        {/* Dashboard Header Area */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          
+          {/* Stats Card */}
+          <div className="md:col-span-4 lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-xl">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-emerald-500 opacity-50" />
+            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Total Completion</h2>
+            <DonutChart completed={stats.done} total={stats.total} />
+            <div className="mt-6 grid grid-cols-2 gap-3 w-full text-center">
+              <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                <div className="text-xl font-bold text-emerald-400">{stats.done}</div>
+                <div className="text-[10px] text-slate-500 uppercase font-bold">Done</div>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                <div className="text-xl font-bold text-slate-400">{stats.total - stats.done}</div>
+                <div className="text-[10px] text-slate-500 uppercase font-bold">To Do</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Day Navigation & Roadmap */}
+          <div className="md:col-span-8 lg:col-span-9 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-400" />
+                90-Day Timeline
+              </h2>
+              <div className="flex items-center gap-2">
+                 <button 
+                   onClick={() => setActiveDay(Math.max(1, activeDay - 1))}
+                   className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                 >
+                   <ChevronLeft className="w-5 h-5" />
+                 </button>
+                 <span className="text-sm font-mono bg-slate-950 px-3 py-1 rounded border border-slate-800">
+                   Day {activeDay}
+                 </span>
+                 <button 
+                   onClick={() => setActiveDay(Math.min(90, activeDay + 1))}
+                   className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                 >
+                   <ChevronRight className="w-5 h-5" />
+                 </button>
+              </div>
+            </div>
+
+            {/* Scrollable Day Grid */}
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[180px]">
+              <div className="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-15 gap-1.5">
+                {ROADMAP.map((d) => {
+                  const dayTasks = d.tasks;
+                  const dayCompletedCount = dayTasks.filter(t => completedTasks[t.id]).length;
+                  const isFullyComplete = dayCompletedCount === dayTasks.length && dayTasks.length > 0;
+                  const isPartial = dayCompletedCount > 0 && !isFullyComplete;
+                  const isActive = activeDay === d.day;
+                  
+                  let bgClass = 'bg-slate-800 text-slate-500';
+                  if (isFullyComplete) bgClass = 'bg-emerald-500 text-slate-950 font-bold';
+                  else if (isPartial) bgClass = 'bg-slate-700 text-slate-300 border-b-2 border-emerald-500';
+                  
+                  if (isActive) bgClass += ' ring-2 ring-blue-400 scale-110 z-10 shadow-lg shadow-blue-500/20';
+
+                  return (
+                    <button
+                      key={d.day}
+                      onClick={() => setActiveDay(d.day)}
+                      className={`
+                        aspect-square rounded flex items-center justify-center text-xs transition-all
+                        hover:scale-110 hover:z-10
+                        ${bgClass}
+                      `}
+                      title={`Day ${d.day}: ${d.phase}`}
+                    >
+                      {d.day}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm" /> Complete
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-slate-700 border-b-2 border-emerald-500 rounded-sm" /> In Progress
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-slate-800 rounded-sm" /> Pending
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Detailed Day View */}
+        <section className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative">
+          {/* Phase Badge */}
+          <div className="absolute top-0 right-0 p-4">
+             <span className="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-bold text-slate-400 uppercase tracking-wider shadow-sm">
+               {currentDayData?.phase}
+             </span>
+          </div>
+
+          <div className="p-6 lg:p-8">
+            <h2 className="text-3xl font-bold text-white mb-2">Day {activeDay}</h2>
+            <p className="text-slate-400 mb-8 max-w-2xl">
+              Complete the checklists below. Click the resource link <ArrowUpRight className="w-3 h-3 inline" /> to go directly to the problem or guide.
+            </p>
+
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <button 
+                onClick={() => setActiveFilter('ALL')}
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeFilter === 'ALL' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+              >
+                All Tasks
+              </button>
+              {Object.keys(CATEGORIES).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveFilter(cat)}
+                  className={`
+                    px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2
+                    ${activeFilter === cat 
+                      ? `${CATEGORIES[cat].bg} ${CATEGORIES[cat].color} border ${CATEGORIES[cat].border} ring-1 ring-inset` 
+                      : 'bg-slate-800 text-slate-500 hover:bg-slate-750'}
+                  `}
+                >
+                  {CATEGORIES[cat].label}
+                </button>
+              ))}
+            </div>
+
+            {/* Task List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {filteredTasks.length > 0 ? filteredTasks.map(task => (
+                <TaskCard 
+                  key={task.id} 
+                  task={task} 
+                  isCompleted={!!completedTasks[task.id]} 
+                  onToggle={toggleTask} 
+                />
+              )) : (
+                <div className="col-span-full py-12 text-center text-slate-600 italic border border-dashed border-slate-800 rounded-xl">
+                  No tasks for this category today.
+                </div>
+              )}
+            </div>
+
+            {/* Notes Section */}
+            <div className="border-t border-slate-800 pt-6">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <BookOpen className="w-4 h-4" /> Daily Notes
+              </h3>
+              <textarea
+                value={notes[activeDay] || ''}
+                onChange={(e) => updateNote(activeDay, e.target.value)}
+                onBlur={handleNoteBlur}
+                placeholder={`Write down your learnings, patterns, or mistakes for Day ${activeDay}...`}
+                className="w-full h-32 bg-slate-950 border border-slate-800 rounded-xl p-4 text-slate-300 placeholder-slate-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all resize-none"
+              />
+            </div>
+          </div>
+        </section>
+
+      </main>
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #334155;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #475569;
+        }
+      `}</style>
+    </div>
+  );
+}
