@@ -1,0 +1,485 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  CheckCircle2, 
+  Circle, 
+  BookOpen, 
+  Code2, 
+  Target, 
+  ChevronRight, 
+  Calendar,
+  LayoutDashboard,
+  Zap,
+  ChevronDown,
+  ExternalLink,
+  Save,
+  Clock
+} from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+
+// --- Firebase Configuration & Initialization ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'python-dsa-mastery';
+
+// --- Roadmap Data ---
+const ROADMAP_DATA = [
+  {
+    phase: "Phase 1: Foundations",
+    days: "1-15",
+    color: "bg-emerald-500",
+    modules: [
+      {
+        title: "Python for DSA (Brush-Up)",
+        range: [1, 5],
+        topics: ["Lists/Tuples/Sets/Dicts", "Big-O of Python Ops", "Collections (Counter, defaultdict, deque, heapq)", "Comprehensions", "Recursion Basics"],
+        problems: ["Reverse String/Array", "Frequency Counting", "First Non-Repeating Char", "Stack/Queue Implementation"]
+      },
+      {
+        title: "Big-O + Arrays Basics",
+        range: [6, 10],
+        topics: ["Time/Space Complexity", "Loop Analysis", "Recursion Stack Space", "Min/Max Patterns"],
+        problems: ["Two Sum", "Maximum Subarray", "Move Zeroes", "Best Time to Buy & Sell Stock", "Contains Duplicate"]
+      },
+      {
+        title: "Strings + Hashing",
+        range: [11, 15],
+        topics: ["Frequency Maps", "Anagram Logic", "Prefix Logic"],
+        problems: ["Valid Anagram", "Longest Common Prefix", "Group Anagrams", "First Unique Character", "Isomorphic Strings"]
+      }
+    ]
+  },
+  {
+    phase: "Phase 2: Core DSA",
+    days: "16-45",
+    color: "bg-blue-500",
+    modules: [
+      {
+        title: "Two Pointers & Sliding Window",
+        range: [16, 25],
+        topics: ["Fixed Window", "Variable Window", "Left/Right Pointer Patterns"],
+        problems: ["Longest Substring Without Repeating Characters", "Minimum Window Substring", "Container With Most Water", "Remove Duplicates", "Subarray Sum Equals K"]
+      },
+      {
+        title: "Recursion & Backtracking",
+        range: [26, 30],
+        topics: ["Base Cases", "Choice Diagrams", "Recursion Trees"],
+        problems: ["Fibonacci (Recursive/Optimized)", "Subsets", "Permutations", "Combination Sum", "N-Queens"]
+      },
+      {
+        title: "Linked Lists",
+        range: [31, 35],
+        topics: ["Pointers", "Dummy Nodes", "Fast & Slow Pointers"],
+        problems: ["Reverse Linked List", "Detect Cycle", "Merge Two Sorted Lists", "Remove Nth Node", "Intersection of Lists"]
+      },
+      {
+        title: "Stack & Queue",
+        range: [36, 40],
+        topics: ["Monotonic Stack", "Expression Parsing", "Queue via Stack"],
+        problems: ["Valid Parentheses", "Next Greater Element", "Daily Temperatures", "Min Stack", "Implement Queue using Stacks"]
+      },
+      {
+        title: "Trees (Core)",
+        range: [41, 45],
+        topics: ["DFS vs BFS", "Recursion on Trees", "BST Basics"],
+        problems: ["Tree Traversal (In/Pre/Post)", "Max Depth", "Diameter of Tree", "Invert Binary Tree", "Level Order Traversal"]
+      }
+    ]
+  },
+  {
+    phase: "Phase 3: Advanced DSA",
+    days: "46-75",
+    color: "bg-purple-500",
+    modules: [
+      {
+        title: "Binary Search & BST",
+        range: [46, 55],
+        topics: ["Search Space Concept", "Lower/Upper Bounds"],
+        problems: ["Binary Search", "Search in Rotated Array", "Find First/Last Position", "Kth Smallest in BST", "Validate BST"]
+      },
+      {
+        title: "Heaps & Priority Queue",
+        range: [56, 65],
+        topics: ["Top K Patterns", "Streaming Data"],
+        problems: ["Kth Largest Element", "Top K Frequent", "Merge K Sorted Lists", "Find Median from Stream"]
+      },
+      {
+        title: "Graphs",
+        range: [66, 75],
+        topics: ["BFS/DFS on Adjacency Lists", "Visited Arrays", "Cycle Detection"],
+        problems: ["Number of Islands", "Clone Graph", "Course Schedule", "Detect Cycle", "Shortest Path in Matrix"]
+      }
+    ]
+  },
+  {
+    phase: "Phase 4: Dynamic Programming",
+    days: "76-90",
+    color: "bg-rose-500",
+    modules: [
+      {
+        title: "DP Basics (1D)",
+        range: [76, 80],
+        topics: ["Recurrence Relations", "Memoization vs Tabulation"],
+        problems: ["Climbing Stairs", "House Robber", "Fibonacci (DP)", "Min Cost Climbing Stairs"]
+      },
+      {
+        title: "DP on 2D / Grids",
+        range: [81, 85],
+        topics: ["Grid Traversal DP", "Path Sums"],
+        problems: ["Unique Paths", "Minimum Path Sum", "Coin Change", "Longest Common Subsequence"]
+      },
+      {
+        title: "DP Subsequences + Final Review",
+        range: [86, 90],
+        topics: ["Knapsack Patterns", "LIS Patterns"],
+        problems: ["Longest Increasing Subsequence", "Partition Equal Subset Sum", "Knapsack (0/1)", "Rod Cutting"]
+      }
+    ]
+  }
+];
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [progress, setProgress] = useState({});
+  const [notes, setNotes] = useState({});
+  const [activeDay, setActiveDay] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('');
+
+  // --- Auth & Data Fetching ---
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+      }
+    };
+    initAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      if (!u) setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'userProgress');
+    
+    const unsub = onSnapshot(progressRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setProgress(data.completedDays || {});
+        setNotes(data.dailyNotes || {});
+      }
+      setLoading(false);
+    }, (err) => {
+      console.error("Firestore read error:", err);
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, [user]);
+
+  const saveProgress = async (newProgress, newNotes) => {
+    if (!user) return;
+    setSaveStatus('Saving...');
+    try {
+      const progressRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'userProgress');
+      await setDoc(progressRef, {
+        completedDays: newProgress || progress,
+        dailyNotes: newNotes || notes,
+        lastUpdated: new Date().toISOString()
+      }, { merge: true });
+      setSaveStatus('Saved');
+      setTimeout(() => setSaveStatus(''), 2000);
+    } catch (err) {
+      console.error("Save error:", err);
+      setSaveStatus('Error saving');
+    }
+  };
+
+  const toggleDay = (day) => {
+    const newProgress = { ...progress, [day]: !progress[day] };
+    setProgress(newProgress);
+    saveProgress(newProgress, notes);
+  };
+
+  const updateNote = (day, text) => {
+    const newNotes = { ...notes, [day]: text };
+    setNotes(newNotes);
+  };
+
+  // --- Computed Data ---
+  const currentModule = useMemo(() => {
+    for (const phase of ROADMAP_DATA) {
+      for (const mod of phase.modules) {
+        if (activeDay >= mod.range[0] && activeDay <= mod.range[1]) {
+          return { ...mod, phaseColor: phase.color, phaseName: phase.phase };
+        }
+      }
+    }
+    return null;
+  }, [activeDay]);
+
+  const completionPercentage = useMemo(() => {
+    const total = 90;
+    const completed = Object.values(progress).filter(Boolean).length;
+    return Math.round((completed / total) * 100);
+  }, [progress]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+          <p className="animate-pulse">Loading Roadmap...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/10 rounded-lg">
+              <Code2 className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+                90-Day Python + DSA Mastery
+              </h1>
+              <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Working Professional Plan</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-medium text-slate-400">{completionPercentage}% Completed</span>
+              <div className="w-48 h-2 bg-slate-800 rounded-full mt-1 overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-700 ease-out"
+                  style={{ width: `${completionPercentage}%` }}
+                />
+              </div>
+            </div>
+            {saveStatus && (
+              <span className="text-xs text-emerald-400 animate-pulse flex items-center gap-1">
+                <Save className="w-3 h-3" /> {saveStatus}
+              </span>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* Left Column: Calendar/Grid */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-emerald-400" />
+                90 Day Roadmap
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-5 sm:grid-cols-10 lg:grid-cols-5 gap-2">
+              {Array.from({ length: 90 }, (_, i) => i + 1).map((day) => {
+                const isCompleted = progress[day];
+                const isActive = activeDay === day;
+                const phase = ROADMAP_DATA.find(p => {
+                  const [start, end] = p.days.split('-').map(Number);
+                  return day >= start && day <= end;
+                });
+
+                return (
+                  <button
+                    key={day}
+                    onClick={() => setActiveDay(day)}
+                    className={`
+                      aspect-square rounded-lg flex items-center justify-center text-xs font-bold transition-all relative group
+                      ${isActive ? 'ring-2 ring-emerald-500 scale-110 z-10' : 'hover:scale-105'}
+                      ${isCompleted ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-800 text-slate-500'}
+                    `}
+                  >
+                    {day}
+                    {isCompleted && (
+                      <div className="absolute -top-1 -right-1">
+                        <CheckCircle2 className="w-3 h-3 text-white fill-emerald-500" />
+                      </div>
+                    )}
+                    {/* Tooltip-like phase indicator */}
+                    {!isCompleted && !isActive && (
+                      <div className={`absolute bottom-1 w-1 h-1 rounded-full ${phase?.color}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Legend</h3>
+             <div className="space-y-3">
+               {ROADMAP_DATA.map(p => (
+                 <div key={p.phase} className="flex items-center gap-3">
+                   <div className={`w-3 h-3 rounded-full ${p.color}`} />
+                   <span className="text-sm text-slate-300">{p.phase} (Days {p.days})</span>
+                 </div>
+               ))}
+             </div>
+          </div>
+        </div>
+
+        {/* Right Column: Daily Content */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Daily Header */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            <div className={`h-2 ${currentModule?.phaseColor || 'bg-slate-700'}`} />
+            <div className="p-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold uppercase tracking-widest mb-1">
+                    <Zap className="w-4 h-4" />
+                    {currentModule?.phaseName}
+                  </div>
+                  <h2 className="text-3xl font-bold">Day {activeDay}: {currentModule?.title}</h2>
+                </div>
+                <button
+                  onClick={() => toggleDay(activeDay)}
+                  className={`
+                    px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all
+                    ${progress[activeDay] 
+                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'}
+                  `}
+                >
+                  {progress[activeDay] ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                  {progress[activeDay] ? 'Completed' : 'Mark Complete'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
+                  <div className="text-slate-500 text-xs font-bold uppercase mb-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> 30m Focus
+                  </div>
+                  <p className="text-slate-200 font-medium">Concept Review</p>
+                </div>
+                <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
+                  <div className="text-slate-500 text-xs font-bold uppercase mb-1 flex items-center gap-1">
+                    <Code2 className="w-3 h-3" /> 90m Focus
+                  </div>
+                  <p className="text-slate-200 font-medium">Solve Problems</p>
+                </div>
+                <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
+                  <div className="text-slate-500 text-xs font-bold uppercase mb-1 flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" /> 15m Focus
+                  </div>
+                  <p className="text-slate-200 font-medium">Notes & Revision</p>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                {/* Topics */}
+                <section>
+                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                    <Target className="w-5 h-5 text-emerald-400" />
+                    Key Concepts to Master
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {currentModule?.topics.map((topic, i) => (
+                      <div key={i} className="flex items-start gap-3 bg-slate-800/30 p-3 rounded-lg border border-slate-700/50">
+                        <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <span className="text-slate-300 text-sm">{topic}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Problems */}
+                <section>
+                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                    <Code2 className="w-5 h-5 text-blue-400" />
+                    Target Problems (LeetCode)
+                  </h3>
+                  <div className="space-y-3">
+                    {currentModule?.problems.map((prob, i) => (
+                      <a 
+                        key={i}
+                        href={`https://leetcode.com/problemset/all/?search=${encodeURIComponent(prob)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex items-center justify-between bg-slate-800/50 hover:bg-slate-800 p-4 rounded-xl border border-slate-700/50 transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-8 h-8 flex items-center justify-center bg-slate-950 rounded-lg text-xs font-mono text-slate-500 group-hover:text-blue-400 transition-colors">
+                            {i + 1}
+                          </div>
+                          <span className="font-medium text-slate-200">{prob}</span>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-slate-600 group-hover:text-blue-400 transition-colors" />
+                      </a>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Notes Editor */}
+                <section>
+                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                    <BookOpen className="w-5 h-5 text-amber-400" />
+                    Daily Notes
+                  </h3>
+                  <textarea
+                    value={notes[activeDay] || ''}
+                    onChange={(e) => updateNote(activeDay, e.target.value)}
+                    onBlur={() => saveProgress(progress, notes)}
+                    placeholder="Reflect on today's learning, patterns discovered, or difficulties faced..."
+                    className="w-full h-40 bg-slate-950 border border-slate-800 rounded-xl p-4 text-slate-300 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all resize-none"
+                  />
+                </section>
+              </div>
+            </div>
+          </div>
+          
+          {/* Rules Section */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Mastery Rules</h3>
+            <ul className="space-y-3 text-sm text-slate-400">
+              <li className="flex gap-3">
+                <span className="text-emerald-500">✅</span>
+                <span>Don't look at solutions for at least 20-30 minutes. Use hints first.</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-emerald-500">✅</span>
+                <span>Maintain a DSA notebook (use the notes section here!).</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-emerald-500">✅</span>
+                <span>Re-solve 5 old problems every week without seeing the code.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </main>
+
+      <footer className="max-w-7xl mx-auto p-8 text-center text-slate-600 text-xs border-t border-slate-900 mt-8">
+        Designed for Working Professionals • Python + DSA 90-Day Challenge • Stay Consistent
+      </footer>
+    </div>
+  );
+}
