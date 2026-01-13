@@ -1,0 +1,527 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { 
+  CheckCircle2, 
+  Circle, 
+  BookOpen, 
+  Code2, 
+  Target, 
+  Briefcase,
+  Terminal,
+  Cpu,
+  MessageSquare,
+  Calendar,
+  Zap,
+  ExternalLink,
+  Save,
+  Clock,
+  Trophy,
+  Filter,
+  ChevronRight,
+  ChevronLeft,
+  Search
+} from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
+
+// --- Firebase Config ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'career-mastery-v2';
+
+// --- Data Generation (Merging DSA + Placement) ---
+const CATEGORIES = {
+  DSA: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: Code2 },
+  APTITUDE: { color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', icon: Clock },
+  PORTFOLIO: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: Briefcase },
+  CS_CORE: { color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: Cpu },
+  INTERVIEW: { color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20', icon: MessageSquare },
+  PYTHON: { color: 'text-yellow-300', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', icon: Terminal },
+};
+
+// Helper to build the roadmap
+const generateRoadmap = () => {
+  const days = [];
+  
+  // Phase 1: Foundations (Days 1-15)
+  for (let i = 1; i <= 15; i++) {
+    const tasks = [];
+    
+    // DSA / Python Core
+    if (i <= 5) {
+      tasks.push({ id: `d${i}_py`, text: "Python Internals: Lists, Dicts, Sets complexity", category: "PYTHON" });
+      tasks.push({ id: `d${i}_prob`, text: "Solve: Reverse String, Valid Anagram", category: "DSA", link: "https://leetcode.com/problemset/all/?search=Anagram" });
+    } else if (i <= 10) {
+      tasks.push({ id: `d${i}_dsa`, text: "Arrays & Big-O Analysis", category: "DSA" });
+      tasks.push({ id: `d${i}_prob`, text: "Solve: Two Sum, Max Subarray", category: "DSA", link: "https://leetcode.com/problems/two-sum" });
+    } else {
+      tasks.push({ id: `d${i}_dsa`, text: "Strings & Hashing Strategies", category: "DSA" });
+      tasks.push({ id: `d${i}_prob`, text: "Solve: Group Anagrams, Longest Common Prefix", category: "DSA" });
+    }
+
+    // Placement Integrations
+    if (i === 1) tasks.push({ id: `d${i}_res`, text: "Draft Resume V1: Contact, Education, Skills", category: "PORTFOLIO" });
+    if (i === 2) tasks.push({ id: `d${i}_git`, text: "GitHub: Create repo for old project & Push", category: "PORTFOLIO" });
+    if (i === 3) tasks.push({ id: `d${i}_apt`, text: "Quant: Percentages Basics (5-7 problems)", category: "APTITUDE" });
+    if (i === 5) tasks.push({ id: `d${i}_log`, text: "Logical: Blood Relations", category: "APTITUDE" });
+    if (i === 6) tasks.push({ id: `d${i}_res2`, text: "Resume: Refine project descriptions (STAR method)", category: "PORTFOLIO" });
+    if (i === 7) tasks.push({ id: `d${i}_git2`, text: "GitHub: Write a quality README.md", category: "PORTFOLIO" });
+    if (i === 10) tasks.push({ id: `d${i}_db`, text: "CS Core: DBMS Normalization (1NF-3NF)", category: "CS_CORE" });
+    if (i === 12) tasks.push({ id: `d${i}_verb`, text: "Verbal: Reading Comprehension Practice", category: "APTITUDE" });
+
+    days.push({ day: i, phase: "Phase 1: Foundations", tasks });
+  }
+
+  // Phase 2: Core DSA (Days 16-45)
+  for (let i = 16; i <= 45; i++) {
+    const tasks = [];
+    
+    // DSA Core
+    if (i <= 25) {
+      tasks.push({ id: `d${i}_dsa`, text: "Two Pointers & Sliding Window Patterns", category: "DSA" });
+      tasks.push({ id: `d${i}_prob`, text: "Solve: Container With Most Water, 3Sum", category: "DSA" });
+    } else if (i <= 30) {
+      tasks.push({ id: `d${i}_dsa`, text: "Recursion & Backtracking Visualization", category: "DSA" });
+      tasks.push({ id: `d${i}_prob`, text: "Solve: Subsets, Permutations", category: "DSA" });
+    } else if (i <= 35) {
+      tasks.push({ id: `d${i}_dsa`, text: "Linked Lists: Fast/Slow Pointers", category: "DSA" });
+      tasks.push({ id: `d${i}_prob`, text: "Solve: Reverse LL, Detect Cycle", category: "DSA" });
+    } else if (i <= 40) {
+      tasks.push({ id: `d${i}_dsa`, text: "Stacks & Queues: Monotonic Stack", category: "DSA" });
+      tasks.push({ id: `d${i}_prob`, text: "Solve: Valid Parentheses, Next Greater Element", category: "DSA" });
+    } else {
+      tasks.push({ id: `d${i}_dsa`, text: "Trees: DFS/BFS Traversal", category: "DSA" });
+      tasks.push({ id: `d${i}_prob`, text: "Solve: Max Depth, Invert Tree", category: "DSA" });
+    }
+
+    // Placement Integrations
+    if (i === 17) tasks.push({ id: `d${i}_os`, text: "OS: Process vs Threads", category: "CS_CORE" });
+    if (i === 20) tasks.push({ id: `d${i}_net`, text: "Networks: OSI Model Layers", category: "CS_CORE" });
+    if (i === 26) tasks.push({ id: `d${i}_hr`, text: "HR: Draft 'Tell me about yourself' (60s pitch)", category: "INTERVIEW" });
+    if (i === 30) tasks.push({ id: `d${i}_hr2`, text: "HR: Greatest Strengths & Weaknesses", category: "INTERVIEW" });
+    if (i === 32) tasks.push({ id: `d${i}_sql`, text: "DBMS: SQL Joins (Inner, Left, Right)", category: "CS_CORE" });
+    if (i === 37) tasks.push({ id: `d${i}_gd`, text: "GD Prep: Read editorial on current tech trends", category: "INTERVIEW" });
+    if (i === 43) tasks.push({ id: `d${i}_mock`, text: "Mock Test: 30min Aptitude (Quant/Logic/Verbal)", category: "APTITUDE" });
+
+    days.push({ day: i, phase: "Phase 2: Core DSA", tasks });
+  }
+
+  // Phase 3 & 4 (Simplified for brevity, but follows pattern)
+  for (let i = 46; i <= 90; i++) {
+    const tasks = [];
+    let phase = i <= 75 ? "Phase 3: Advanced DSA" : "Phase 4: DP Mastery";
+    
+    tasks.push({ id: `d${i}_dsa`, text: i <= 75 ? "Graphs/Heaps Practice" : "Dynamic Programming Patterns", category: "DSA" });
+    tasks.push({ id: `d${i}_prob`, text: "Solve 2 Medium Problems", category: "DSA" });
+
+    if (i === 46) tasks.push({ id: `d${i}_rec`, text: "Mock Interview: Record yourself explaining a project", category: "INTERVIEW" });
+    if (i === 50) tasks.push({ id: `d${i}_rev`, text: "Final Review: Resume & GitHub Polish", category: "PORTFOLIO" });
+    if (i === 55) tasks.push({ id: `d${i}_res`, text: "Company Research: Target 5 companies", category: "INTERVIEW" });
+    if (i % 7 === 0) tasks.push({ id: `d${i}_test`, text: "Weekly Revision: Re-solve 5 old problems", category: "DSA" });
+
+    days.push({ day: i, phase, tasks });
+  }
+
+  return days;
+};
+
+const ROADMAP = generateRoadmap();
+
+// --- Components ---
+
+const DonutChart = ({ completed, total }) => {
+  const percentage = total > 0 ? (completed / total) * 100 : 0;
+  const strokeDasharray = 2 * Math.PI * 40; // radius 40
+  const strokeDashoffset = strokeDasharray * ((100 - percentage) / 100);
+
+  return (
+    <div className="relative w-32 h-32 flex items-center justify-center">
+      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#1e293b" strokeWidth="12" />
+        <circle 
+          cx="50" cy="50" r="40" 
+          fill="transparent" 
+          stroke={percentage === 100 ? "#10b981" : "#0ea5e9"} 
+          strokeWidth="12" 
+          strokeDasharray={strokeDasharray} 
+          strokeDashoffset={strokeDashoffset} 
+          strokeLinecap="round"
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center">
+        <span className="text-2xl font-bold text-slate-200">{Math.round(percentage)}%</span>
+        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Done</span>
+      </div>
+    </div>
+  );
+};
+
+const TaskCard = ({ task, isCompleted, onToggle }) => {
+  const catStyle = CATEGORIES[task.category] || CATEGORIES.DSA;
+  const Icon = catStyle.icon;
+
+  return (
+    <div 
+      className={`
+        relative p-4 rounded-xl border transition-all duration-300 group
+        ${isCompleted 
+          ? 'bg-slate-900/30 border-slate-800 opacity-75' 
+          : 'bg-slate-800/50 border-slate-700 hover:border-slate-600 hover:bg-slate-800'}
+      `}
+    >
+      <div className="flex items-start gap-4">
+        <button
+          onClick={() => onToggle(task.id)}
+          className={`
+            mt-1 flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all
+            ${isCompleted 
+              ? 'bg-emerald-500 border-emerald-500 text-white' 
+              : 'border-slate-600 text-transparent hover:border-slate-400'}
+          `}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+        </button>
+        
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${catStyle.bg} ${catStyle.color} border ${catStyle.border}`}>
+              {task.category.replace('_', ' ')}
+            </span>
+            {task.link && (
+              <a href={task.link} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-blue-400">
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+          </div>
+          <p className={`text-sm font-medium ${isCompleted ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+            {task.text}
+          </p>
+        </div>
+        
+        <Icon className={`w-5 h-5 opacity-20 group-hover:opacity-40 transition-opacity ${catStyle.color}`} />
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [completedTasks, setCompletedTasks] = useState({}); // { taskId: boolean }
+  const [notes, setNotes] = useState({}); // { dayId: string }
+  const [activeDay, setActiveDay] = useState(1);
+  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('');
+
+  // --- Auth & Sync ---
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) { console.error(err); }
+    };
+    initAuth();
+    return onAuthStateChanged(auth, u => {
+      setUser(u);
+      if(!u) setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'mastery');
+    const unsub = onSnapshot(ref, snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        setCompletedTasks(d.completedTasks || {});
+        setNotes(d.notes || {});
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [user]);
+
+  const saveData = useCallback(async (newTasks, newNotes) => {
+    if (!user) return;
+    setSaveStatus('Saving...');
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'mastery'), {
+        completedTasks: newTasks || completedTasks,
+        notes: newNotes || notes,
+        lastUpdated: new Date().toISOString()
+      }, { merge: true });
+      setSaveStatus('Saved');
+      setTimeout(() => setSaveStatus(''), 1500);
+    } catch (e) { setSaveStatus('Error'); }
+  }, [user, completedTasks, notes]);
+
+  // --- Handlers ---
+  const toggleTask = (taskId) => {
+    const next = { ...completedTasks, [taskId]: !completedTasks[taskId] };
+    setCompletedTasks(next);
+    saveData(next, notes);
+  };
+
+  const updateNote = (day, text) => {
+    const next = { ...notes, [day]: text };
+    setNotes(next);
+  };
+
+  const handleNoteBlur = () => saveData(completedTasks, notes);
+
+  // --- Computed Stats ---
+  const currentDayData = ROADMAP.find(d => d.day === activeDay);
+  
+  const stats = useMemo(() => {
+    let total = 0;
+    let done = 0;
+    ROADMAP.forEach(day => {
+      day.tasks.forEach(t => {
+        total++;
+        if (completedTasks[t.id]) done++;
+      });
+    });
+    return { total, done };
+  }, [completedTasks]);
+
+  const filteredTasks = useMemo(() => {
+    if (!currentDayData) return [];
+    if (activeFilter === 'ALL') return currentDayData.tasks;
+    return currentDayData.tasks.filter(t => t.category === activeFilter);
+  }, [currentDayData, activeFilter]);
+
+  if (loading) return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"/>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-blue-500/30">
+      
+      {/* Top Navigation Bar */}
+      <nav className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
+              <Terminal size={18} />
+            </div>
+            <span className="font-bold text-lg hidden sm:block tracking-tight text-slate-100">
+              Career<span className="text-blue-400">Mastery</span>
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex flex-col items-end mr-2">
+              <span className="text-xs text-slate-400 font-medium">Overall Progress</span>
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-500"
+                    style={{ width: `${(stats.done / stats.total) * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold text-slate-200">{Math.round((stats.done / stats.total) * 100)}%</span>
+              </div>
+            </div>
+            {saveStatus && (
+              <span className="flex items-center gap-1 text-xs font-medium text-emerald-400 animate-pulse">
+                <Save className="w-3 h-3" /> {saveStatus}
+              </span>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8">
+        
+        {/* Dashboard Header Area */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          
+          {/* Stats Card */}
+          <div className="md:col-span-4 lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-xl">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-emerald-500" />
+            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Completion</h2>
+            <DonutChart completed={stats.done} total={stats.total} />
+            <div className="mt-4 grid grid-cols-2 gap-4 w-full text-center">
+              <div className="bg-slate-800/50 rounded-lg p-2">
+                <div className="text-xl font-bold text-white">{stats.done}</div>
+                <div className="text-[10px] text-slate-500 uppercase">Tasks Done</div>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-2">
+                <div className="text-xl font-bold text-slate-400">{stats.total - stats.done}</div>
+                <div className="text-[10px] text-slate-500 uppercase">Remaining</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Day Navigation & Roadmap */}
+          <div className="md:col-span-8 lg:col-span-9 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-400" />
+                90-Day Timeline
+              </h2>
+              <div className="flex items-center gap-2">
+                 <button 
+                   onClick={() => setActiveDay(Math.max(1, activeDay - 1))}
+                   className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                 >
+                   <ChevronLeft className="w-5 h-5" />
+                 </button>
+                 <span className="text-sm font-mono bg-slate-950 px-3 py-1 rounded border border-slate-800">
+                   Day {activeDay}
+                 </span>
+                 <button 
+                   onClick={() => setActiveDay(Math.min(90, activeDay + 1))}
+                   className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                 >
+                   <ChevronRight className="w-5 h-5" />
+                 </button>
+              </div>
+            </div>
+
+            {/* Scrollable Day Grid */}
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-15 gap-1.5">
+                {ROADMAP.map((d) => {
+                  const dayTasks = d.tasks;
+                  const dayCompletedCount = dayTasks.filter(t => completedTasks[t.id]).length;
+                  const isFullyComplete = dayCompletedCount === dayTasks.length && dayTasks.length > 0;
+                  const isPartial = dayCompletedCount > 0 && !isFullyComplete;
+                  const isActive = activeDay === d.day;
+                  
+                  let bgClass = 'bg-slate-800 text-slate-500';
+                  if (isFullyComplete) bgClass = 'bg-emerald-500 text-slate-950 font-bold';
+                  else if (isPartial) bgClass = 'bg-slate-700 text-slate-300 border-b-2 border-emerald-500';
+                  
+                  if (isActive) bgClass += ' ring-2 ring-blue-400 scale-110 z-10';
+
+                  return (
+                    <button
+                      key={d.day}
+                      onClick={() => setActiveDay(d.day)}
+                      className={`
+                        aspect-square rounded flex items-center justify-center text-xs transition-all
+                        hover:scale-110 hover:z-10
+                        ${bgClass}
+                      `}
+                      title={`Day ${d.day}: ${d.phase}`}
+                    >
+                      {d.day}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm" /> Complete
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-slate-700 border-b-2 border-emerald-500 rounded-sm" /> In Progress
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 bg-slate-800 rounded-sm" /> Pending
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Detailed Day View */}
+        <section className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative">
+          {/* Phase Badge */}
+          <div className="absolute top-0 right-0 p-4">
+             <span className="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-bold text-slate-400 uppercase tracking-wider">
+               {currentDayData?.phase}
+             </span>
+          </div>
+
+          <div className="p-6 lg:p-8">
+            <h2 className="text-3xl font-bold text-white mb-2">Day {activeDay}</h2>
+            <p className="text-slate-400 mb-8">Focus on your goals. One task at a time.</p>
+
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <button 
+                onClick={() => setActiveFilter('ALL')}
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${activeFilter === 'ALL' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+              >
+                All Tasks
+              </button>
+              {Object.keys(CATEGORIES).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveFilter(cat)}
+                  className={`
+                    px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2
+                    ${activeFilter === cat 
+                      ? `${CATEGORIES[cat].bg} ${CATEGORIES[cat].color} border ${CATEGORIES[cat].border} ring-1 ring-inset` 
+                      : 'bg-slate-800 text-slate-500 hover:bg-slate-750'}
+                  `}
+                >
+                  {cat.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+
+            {/* Task List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {filteredTasks.length > 0 ? filteredTasks.map(task => (
+                <TaskCard 
+                  key={task.id} 
+                  task={task} 
+                  isCompleted={!!completedTasks[task.id]} 
+                  onToggle={toggleTask} 
+                />
+              )) : (
+                <div className="col-span-full py-12 text-center text-slate-600 italic">
+                  No tasks for this category today.
+                </div>
+              )}
+            </div>
+
+            {/* Notes Section */}
+            <div className="border-t border-slate-800 pt-6">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <BookOpen className="w-4 h-4" /> Daily Notes
+              </h3>
+              <textarea
+                value={notes[activeDay] || ''}
+                onChange={(e) => updateNote(activeDay, e.target.value)}
+                onBlur={handleNoteBlur}
+                placeholder={`Write down your learnings, patterns, or mistakes for Day ${activeDay}...`}
+                className="w-full h-32 bg-slate-950 border border-slate-800 rounded-xl p-4 text-slate-300 placeholder-slate-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all resize-none"
+              />
+            </div>
+          </div>
+        </section>
+
+      </main>
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #334155;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #475569;
+        }
+      `}</style>
+    </div>
+  );
+}
